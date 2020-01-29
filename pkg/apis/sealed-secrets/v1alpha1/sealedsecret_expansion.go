@@ -184,7 +184,7 @@ func StripLastAppliedAnnotations(annotations map[string]string) {
 // NewSealedSecret creates a new SealedSecret object wrapping the
 // provided secret. This encrypts only the values of each secrets
 // individually, so secrets can be updated one by one.
-func NewSealedSecret(codecs runtimeserializer.CodecFactory, pubKey *rsa.PublicKey, secret *v1.Secret) (*SealedSecret, error) {
+func NewSealedSecret(codecs runtimeserializer.CodecFactory, pubKey *rsa.PublicKey, secret *v1.Secret, sessionKeySeed string) (*SealedSecret, error) {
 	if SecretScope(secret) != ClusterWideScope && secret.GetNamespace() == "" {
 		return nil, fmt.Errorf("secret must declare a namespace")
 	}
@@ -218,8 +218,13 @@ func NewSealedSecret(codecs runtimeserializer.CodecFactory, pubKey *rsa.PublicKe
 	// during decryption.
 	label, clusterWide, namespaceWide := labelFor(secret)
 
+	sessionKeyProvider, err := crypto.SessionKeyProvider(sessionKeySeed, []byte(secret.String()))
+	if (err != nil){
+		return nil, err
+	}
+
 	for key, value := range secret.Data {
-		ciphertext, err := crypto.HybridEncrypt(rand.Reader, pubKey, value, label)
+		ciphertext, err := crypto.HybridEncrypt(sessionKeyProvider, pubKey, value, label)
 		if err != nil {
 			return nil, err
 		}
@@ -227,7 +232,7 @@ func NewSealedSecret(codecs runtimeserializer.CodecFactory, pubKey *rsa.PublicKe
 	}
 
 	for key, value := range secret.StringData {
-		ciphertext, err := crypto.HybridEncrypt(rand.Reader, pubKey, []byte(value), label)
+		ciphertext, err := crypto.HybridEncrypt(sessionKeyProvider, pubKey, []byte(value), label)
 		if err != nil {
 			return nil, err
 		}

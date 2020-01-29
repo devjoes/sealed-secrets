@@ -356,7 +356,7 @@ func (c *Controller) Rotate(content []byte) ([]byte, error) {
 			return nil, fmt.Errorf("Error decrypting secret. %v", err)
 		}
 		latestPrivKey := c.keyRegistry.latestPrivateKey()
-		resealedSecret, err := ssv1alpha1.NewSealedSecret(scheme.Codecs, &latestPrivKey.PublicKey, secret)
+		resealedSecret, err := ssv1alpha1.NewSealedSecret(scheme.Codecs, &latestPrivKey.PublicKey, secret, "")
 		if err != nil {
 			return nil, fmt.Errorf("Error creating new sealed secret. %v", err)
 		}

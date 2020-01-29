@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
@@ -64,6 +63,7 @@ var (
 	reEncrypt      bool // re-encrypt command
 	unseal         = flag.Bool("recovery-unseal", false, "Decrypt a sealed secrets file obtained from stdin, using the private key passed with --recovery-private-key. Intended to be used in disaster recovery mode.")
 	privKeys       = flag.StringSlice("recovery-private-key", nil, "Private key filename used by the --recovery-unseal command. Multiple files accepted either via comma separated list or by repetition of the flag. Either PEM encoded private keys or a backup of a json/yaml encoded k8s sealed-secret controller secret (and v1.List) are accepted. ")
+	sessionKeySeed = flag.String("session-key-seed", "", "Optional session key (32 char+). If set then identical input will result in identical output (e.g. it is deterministic). If possible do not use this!")
 
 	// VERSION set from Makefile
 	VERSION = buildinfo.DefaultVersion
@@ -226,7 +226,7 @@ func openCert(certURL string) (io.ReadCloser, error) {
 // Seal reads a k8s Secret resource parsed from an input reader by a given codec, encrypts all its secrets
 // with a given public key, using the name and namespace found in the input secret, unless explicitly overridden
 // by the overrideName and overrideNamespace arguments.
-func seal(in io.Reader, out io.Writer, codecs runtimeserializer.CodecFactory, pubKey *rsa.PublicKey, allowEmptyData bool, overrideName, overrideNamespace string) error {
+func seal(in io.Reader, out io.Writer, codecs runtimeserializer.CodecFactory, pubKey *rsa.PublicKey, allowEmptyData bool, overrideName, overrideNamespace string, sessionKeySeed string) error {
 	secret, err := readSecret(codecs.UniversalDecoder(), in)
 	if err != nil {
 		return err
@@ -267,7 +267,7 @@ func seal(in io.Reader, out io.Writer, codecs runtimeserializer.CodecFactory, pu
 	secret.SetDeletionTimestamp(nil)
 	secret.DeletionGracePeriodSeconds = nil
 
-	ssecret, err := ssv1alpha1.NewSealedSecret(codecs, pubKey, secret)
+	ssecret, err := ssv1alpha1.NewSealedSecret(codecs, pubKey, secret, sessionKeySeed)
 	if err != nil {
 		return err
 	}
@@ -405,7 +405,7 @@ func sealMergingInto(in io.Reader, filename string, codecs runtimeserializer.Cod
 	}
 
 	var buf bytes.Buffer
-	if err := seal(in, &buf, codecs, pubKey, allowEmptyData, orig.Name, orig.Namespace); err != nil {
+	if err := seal(in, &buf, codecs, pubKey, allowEmptyData, orig.Name, orig.Namespace, *sessionKeySeed); err != nil {
 		return err
 	}
 
@@ -434,11 +434,15 @@ func sealMergingInto(in io.Reader, filename string, codecs runtimeserializer.Cod
 	return ioutil.WriteFile(filename, out.Bytes(), 0)
 }
 
-func encryptSecretItem(w io.Writer, secretName, ns string, data []byte, scope ssv1alpha1.SealingScope, pubKey *rsa.PublicKey) error {
+func encryptSecretItem(w io.Writer, secretName, ns string, data []byte, scope ssv1alpha1.SealingScope, pubKey *rsa.PublicKey, sessionKeySeed string) error {
 	// TODO(mkm): refactor cluster-wide/namespace-wide to an actual enum so we can have a simple flag
 	// to refer to the scope mode that is not a tuple of booleans.
 	label := ssv1alpha1.EncryptionLabel(ns, secretName, scope)
-	out, err := crypto.HybridEncrypt(rand.Reader, pubKey, data, label)
+	reader, err := crypto.SessionKeyProvider(sessionKeySeed, data)
+	if err != nil {
+		return err
+	}
+	out, err := crypto.HybridEncrypt(reader, pubKey, data, label)
 	if err != nil {
 		return err
 	}
@@ -573,7 +577,7 @@ func warnTTY() {
 	}
 }
 
-func run(w io.Writer, secretName, controllerNs, controllerName, certURL string, printVersion, validateSecret, reEncrypt, dumpCert, raw, allowEmptyData bool, fromFile []string, mergeInto string, unseal bool, privKeys []string) error {
+func run(w io.Writer, secretName, controllerNs, controllerName, certURL string, printVersion, validateSecret, reEncrypt, dumpCert, raw, allowEmptyData bool, fromFile []string, mergeInto string, unseal bool, privKeys []string, sessionKeySeed string) error {
 	if len(fromFile) != 0 && !raw {
 		return fmt.Errorf("--from-file requires --raw")
 	}
@@ -646,17 +650,17 @@ func run(w io.Writer, secretName, controllerNs, controllerName, certURL string, 
 			return err
 		}
 
-		return encryptSecretItem(w, secretName, ns, data, sealingScope, pubKey)
+		return encryptSecretItem(w, secretName, ns, data, sealingScope, pubKey, sessionKeySeed)
 	}
 
-	return seal(os.Stdin, os.Stdout, scheme.Codecs, pubKey, allowEmptyData, secretName, "")
+	return seal(os.Stdin, os.Stdout, scheme.Codecs, pubKey, allowEmptyData, secretName, "", sessionKeySeed)
 }
 
 func main() {
 	flag.Parse()
 	goflag.CommandLine.Parse([]string{})
 
-	if err := run(os.Stdout, *secretName, *controllerNs, *controllerName, *certURL, *printVersion, *validateSecret, reEncrypt, *dumpCert, *raw, *allowEmptyData, *fromFile, *mergeInto, *unseal, *privKeys); err != nil {
+	if err := run(os.Stdout, *secretName, *controllerNs, *controllerName, *certURL, *printVersion, *validateSecret, reEncrypt, *dumpCert, *raw, *allowEmptyData, *fromFile, *mergeInto, *unseal, *privKeys, *sessionKeySeed); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
