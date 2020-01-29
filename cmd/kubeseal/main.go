@@ -63,7 +63,7 @@ var (
 	reEncrypt      bool // re-encrypt command
 	unseal         = flag.Bool("recovery-unseal", false, "Decrypt a sealed secrets file obtained from stdin, using the private key passed with --recovery-private-key. Intended to be used in disaster recovery mode.")
 	privKeys       = flag.StringSlice("recovery-private-key", nil, "Private key filename used by the --recovery-unseal command. Multiple files accepted either via comma separated list or by repetition of the flag. Either PEM encoded private keys or a backup of a json/yaml encoded k8s sealed-secret controller secret (and v1.List) are accepted. ")
-	sessionKeySeed = flag.String("session-key-seed", "", "Optional session key (16 char+). If set then identical input will result in identical output (e.g. it is deterministic). If possible do not use this!")
+	sessionKeySeed = flag.String("session-key-seed", "", "Optional session key (32 char+). If set then identical input will result in identical output (e.g. it is deterministic). If possible do not use this!")
 
 	// VERSION set from Makefile
 	VERSION = buildinfo.DefaultVersion
@@ -438,7 +438,7 @@ func encryptSecretItem(w io.Writer, secretName, ns string, data []byte, scope ss
 	// TODO(mkm): refactor cluster-wide/namespace-wide to an actual enum so we can have a simple flag
 	// to refer to the scope mode that is not a tuple of booleans.
 	label := ssv1alpha1.EncryptionLabel(ns, secretName, scope)
-	reader, err := crypto.GenerateSessionKeyReader(sessionKeySeed, data)
+	reader, err := crypto.SessionKeyProvider(sessionKeySeed, data)
 	if err != nil {
 		return err
 	}
