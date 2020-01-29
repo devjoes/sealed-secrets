@@ -1,7 +1,9 @@
 package crypto
 
 import (
+	"bytes"
 	"crypto/rsa"
+	"fmt"
 	"io"
 	mathrand "math/rand"
 	"reflect"
@@ -29,5 +31,61 @@ func TestSignKey(t *testing.T) {
 
 	if !reflect.DeepEqual(cert.PublicKey, &key.PublicKey) {
 		t.Errorf("cert pubkey != original pubkey")
+	}
+}
+
+func read1000(t *testing.T, seed string, input []byte) []byte {
+	reader, e := GenerateSessionKeyReader(seed, input)
+	if e != nil {
+		t.Error(e)
+	}
+
+	var buf = make([]byte, 1000)
+	c, e := reader.Read(buf)
+
+	if e != nil {
+		t.Error(e)
+	}
+	if c != 1000 {
+		t.Errorf("Expected 1000 bytes, recieved %d", c)
+	}
+	return buf
+}
+func TestGenerateSessionKeyReader(t *testing.T) {
+	rnd := testRand()
+	input1 := make([]byte, 1000)
+	input2 := make([]byte, 1000)
+	rnd.Read(input1)
+	rnd.Read(input2)
+
+	random1 := read1000(t, "", input1)
+	random2 := read1000(t, "", input1)
+	if bytes.Equal(random1, random2) {
+		t.Error("Default behaviour is not random!")
+	}
+
+	_, e := GenerateSessionKeyReader(fmt.Sprintf("%31v", " "), input1)
+	if e == nil {
+		t.Error("Did not error with 31 char seed")
+	}
+
+	x := read1000(t, fmt.Sprintf("%32v", " "), input1)
+	y := read1000(t, fmt.Sprintf("%32v", " "), input1)
+	if !bytes.Equal(x, y) {
+		t.Error("Same seed and input results in different output")
+	}
+
+	x = read1000(t, fmt.Sprintf("%32v", "a"), input1)
+	y = read1000(t, fmt.Sprintf("%32v", " "), input1)
+	if bytes.Equal(x, y) {
+		t.Error("Different seed and same input results in same output")
+	}
+
+	x = read1000(t, fmt.Sprintf("%32v", " "), input1)
+	y = read1000(t, fmt.Sprintf("%32v", " "), input2)
+	//fmt.Println(base64.StdEncoding.EncodeToString(input1))
+	fmt.Println(x)
+	if bytes.Equal(x, y) {
+		t.Error("Same seed and different input results in same output")
 	}
 }
