@@ -34,8 +34,8 @@ func TestSignKey(t *testing.T) {
 	}
 }
 
-func read1000(t *testing.T, seed string, input []byte) []byte {
-	reader, e := GenerateSessionKeyReader(seed, input)
+func readKey(t *testing.T, seed string, input []byte) []byte {
+	reader, e := SessionKeyProvider(seed, input)
 	if e != nil {
 		t.Error(e)
 	}
@@ -51,38 +51,38 @@ func read1000(t *testing.T, seed string, input []byte) []byte {
 	}
 	return buf
 }
-func TestGenerateSessionKeyReader(t *testing.T) {
+func TestSessionKeyProvider(t *testing.T) {
 	rnd := testRand()
 	input1 := make([]byte, 1000)
 	input2 := make([]byte, 1000)
 	rnd.Read(input1)
 	rnd.Read(input2)
 
-	random1 := read1000(t, "", input1)
-	random2 := read1000(t, "", input1)
+	random1 := readKey(t, "", input1)
+	random2 := readKey(t, "", input1)
 	if bytes.Equal(random1, random2) {
 		t.Error("Default behaviour is not random!")
 	}
 
-	_, e := GenerateSessionKeyReader(fmt.Sprintf("%31v", " "), input1)
+	_, e := SessionKeyProvider(fmt.Sprintf("%31v", " "), input1)
 	if e == nil {
 		t.Error("Did not error with 31 char seed")
 	}
 
-	x := read1000(t, fmt.Sprintf("%32v", " "), input1)
-	y := read1000(t, fmt.Sprintf("%32v", " "), input1)
+	x := readKey(t, fmt.Sprintf("%32v", " "), input1)
+	y := readKey(t, fmt.Sprintf("%32v", " "), input1)
 	if !bytes.Equal(x, y) {
 		t.Error("Same seed and input results in different output")
 	}
 
-	x = read1000(t, fmt.Sprintf("%32v", "a"), input1)
-	y = read1000(t, fmt.Sprintf("%32v", " "), input1)
+	x = readKey(t, fmt.Sprintf("%32v", "a"), input1)
+	y = readKey(t, fmt.Sprintf("%32v", " "), input1)
 	if bytes.Equal(x, y) {
 		t.Error("Different seed and same input results in same output")
 	}
 
-	x = read1000(t, fmt.Sprintf("%32v", " "), input1)
-	y = read1000(t, fmt.Sprintf("%32v", " "), input2)
+	x = readKey(t, fmt.Sprintf("%32v", " "), input1)
+	y = readKey(t, fmt.Sprintf("%32v", " "), input2)
 	//fmt.Println(base64.StdEncoding.EncodeToString(input1))
 	fmt.Println(x)
 	if bytes.Equal(x, y) {

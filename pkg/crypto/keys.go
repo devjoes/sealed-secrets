@@ -61,7 +61,7 @@ func SignKey(r io.Reader, key *rsa.PrivateKey, validFor time.Duration, cn string
 	return x509.ParseCertificate(data)
 }
 
-func GenerateSessionKeyReader(sessionKeySource string, input []byte) (io.Reader, error) {
+func SessionKeyProvider(sessionKeySource string, input []byte) (io.Reader, error) {
 	fmt.Println(sessionKeySource)
 	if len(sessionKeySource) == 0 {
 		return rand.Reader, nil
@@ -71,7 +71,7 @@ func GenerateSessionKeyReader(sessionKeySource string, input []byte) (io.Reader,
 		return nil, errors.New("Session key source must be at least 32 characters long")
 	}
 
-	return newFixedSessionKeyReader([]byte(sessionKeySource), input), nil
+	return newSessionKeyProvider([]byte(sessionKeySource), input), nil
 }
 
 type Reader struct {
@@ -81,7 +81,7 @@ type Reader struct {
 	sha       hash.Hash
 }
 
-func newFixedSessionKeyReader(seed []byte, input []byte) *Reader {
+func newSessionKeyProvider(seed []byte, input []byte) *Reader {
 	sha := sha512.New()
 	sLen := intToBytes(len(seed))
 	iLen := intToBytes(len(sha.Sum(input)))
