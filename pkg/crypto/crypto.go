@@ -123,6 +123,7 @@ func singleDecrypt(rnd io.Reader, privKey *rsa.PrivateKey, ciphertext, label []b
 }
 
 func SessionKeyProvider(sessionKeySeed string, input []byte) (io.Reader, error) {
+	fmt.Printf("Session key seed: %s\n", sessionKeySeed)
 	if len(sessionKeySeed) == 0 {
 		return rand.Reader, nil
 	}
