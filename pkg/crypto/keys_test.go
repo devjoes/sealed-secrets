@@ -83,7 +83,6 @@ func TestSessionKeyProvider(t *testing.T) {
 
 	x = readKey(t, fmt.Sprintf("%32v", " "), input1)
 	y = readKey(t, fmt.Sprintf("%32v", " "), input2)
-	fmt.Println(x)
 	if bytes.Equal(x, y) {
 		t.Error("Same seed and different input results in same output")
 	}
