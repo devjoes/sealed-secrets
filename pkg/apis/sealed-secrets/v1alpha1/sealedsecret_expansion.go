@@ -218,7 +218,10 @@ func NewSealedSecret(codecs runtimeserializer.CodecFactory, pubKey *rsa.PublicKe
 	// during decryption.
 	label, clusterWide, namespaceWide := labelFor(secret)
 
-	sessionKeyProvider := crypto.NewSessionKeyProvider([]byte(sessionKeySeed), []byte(secret.String()))
+	sessionKeyProvider, err := crypto.SessionKeyProvider(sessionKeySeed, []byte(secret.String()))
+	if (err != nil){
+		return nil, err
+	}
 	
 	for key, value := range secret.Data {
 		ciphertext, err := crypto.HybridEncrypt(sessionKeyProvider, pubKey, value, label)

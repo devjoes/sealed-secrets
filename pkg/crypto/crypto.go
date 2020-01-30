@@ -131,6 +131,6 @@ func SessionKeyProvider(sessionKeySeed string, input []byte) (io.Reader, error) 
 		return nil, errors.New("Session key seed must be at least 32 characters long")
 	}
 
-	var provider = NewSessionKeyProvider([]byte(sessionKeySeed), input)
+	var provider = newSessionKeyProvider([]byte(sessionKeySeed), input)
 	return provider, nil
 }

@@ -66,7 +66,7 @@ type Reader struct {
 	sha       hash.Hash
 }
 
-func NewSessionKeyProvider(seed []byte, input []byte) *Reader {
+func newSessionKeyProvider(seed []byte, input []byte) *Reader {
 	sha := sha512.New()
 	sLen := intToBytes(len(seed))
 	iLen := intToBytes(len(sha.Sum(input)))
