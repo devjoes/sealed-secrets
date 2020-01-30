@@ -15,8 +15,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bitnami-labs/sealed-secrets/pkg/buildinfo"
-	"github.com/bitnami-labs/sealed-secrets/pkg/crypto"
+	"github.com/devjoes/sealed-secrets/pkg/buildinfo"
+	"github.com/devjoes/sealed-secrets/pkg/crypto"
 	"github.com/mattn/go-isatty"
 	flag "github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
@@ -31,7 +31,7 @@ import (
 	"k8s.io/client-go/util/keyutil"
 	"k8s.io/klog"
 
-	ssv1alpha1 "github.com/bitnami-labs/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
+	ssv1alpha1 "github.com/devjoes/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
 
 	// Register Auth providers
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -664,17 +664,4 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
-}
-
-func SealSecret(input io.Reader, output io.Writer, certURL string, format string, allowEmptyData bool, secretName string, overrideNamespace string, sessionKeySeed string) error {
-	outputFormat = &format;
-	f, err := openCert(certURL)
-	if err != nil {
-		return err
-	}
-	pubKey, err := parseKey(f)
-	if err != nil {
-		return err
-	}
-    return seal(input, output, scheme.Codecs, pubKey, allowEmptyData, secretName, "", sessionKeySeed)
 }

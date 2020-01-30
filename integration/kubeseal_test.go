@@ -11,7 +11,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	ssv1alpha1 "github.com/bitnami-labs/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
+	ssv1alpha1 "github.com/devjoes/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"

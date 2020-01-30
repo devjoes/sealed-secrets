@@ -26,10 +26,10 @@ import (
 
 	"github.com/bitnami-labs/flagenv"
 	"github.com/bitnami-labs/pflagenv"
-	ssv1alpha1 "github.com/bitnami-labs/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
-	"github.com/bitnami-labs/sealed-secrets/pkg/buildinfo"
-	sealedsecrets "github.com/bitnami-labs/sealed-secrets/pkg/client/clientset/versioned"
-	ssinformers "github.com/bitnami-labs/sealed-secrets/pkg/client/informers/externalversions"
+	ssv1alpha1 "github.com/devjoes/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
+	"github.com/devjoes/sealed-secrets/pkg/buildinfo"
+	sealedsecrets "github.com/devjoes/sealed-secrets/pkg/client/clientset/versioned"
+	ssinformers "github.com/devjoes/sealed-secrets/pkg/client/informers/externalversions"
 )
 
 const (

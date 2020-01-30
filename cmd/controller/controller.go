@@ -22,11 +22,11 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	ssv1alpha1 "github.com/bitnami-labs/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
-	ssclientset "github.com/bitnami-labs/sealed-secrets/pkg/client/clientset/versioned"
-	ssscheme "github.com/bitnami-labs/sealed-secrets/pkg/client/clientset/versioned/scheme"
-	ssv1alpha1client "github.com/bitnami-labs/sealed-secrets/pkg/client/clientset/versioned/typed/sealed-secrets/v1alpha1"
-	ssinformer "github.com/bitnami-labs/sealed-secrets/pkg/client/informers/externalversions"
+	ssv1alpha1 "github.com/devjoes/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
+	ssclientset "github.com/devjoes/sealed-secrets/pkg/client/clientset/versioned"
+	ssscheme "github.com/devjoes/sealed-secrets/pkg/client/clientset/versioned/scheme"
+	ssv1alpha1client "github.com/devjoes/sealed-secrets/pkg/client/clientset/versioned/typed/sealed-secrets/v1alpha1"
+	ssinformer "github.com/devjoes/sealed-secrets/pkg/client/informers/externalversions"
 )
 
 const (

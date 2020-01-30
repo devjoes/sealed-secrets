@@ -12,7 +12,7 @@ import (
 
 	fuzz "github.com/google/gofuzz"
 
-	"github.com/bitnami-labs/sealed-secrets/pkg/crypto"
+	"github.com/devjoes/sealed-secrets/pkg/crypto"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/apitesting/fuzzer"
 	rttesting "k8s.io/apimachinery/pkg/api/apitesting/roundtrip"
