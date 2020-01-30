@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	goflag "flag"
 	"fmt"
@@ -855,3 +856,93 @@ func TestReadPrivKeySecret(t *testing.T) {
 		t.Errorf("got: %q, want: %q", got, want)
 	}
 }
+
+func TestSealSecret(t *testing.T) {
+	input := strings.NewReader(sampleUnsealedSecret)
+	f, err := ioutil.TempFile("/tmp/", "sealedsecret.")
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.Remove(f.Name())
+	f.WriteString(sampleCert)
+	f.Close()
+
+	output := new(bytes.Buffer)
+
+	err = SealSecret(input, output, f.Name(), "json", false, "", "", "FeR8lCYoPXqH3mYYAoXHZkvl1uqSqSTACu98wDBTiJulClys4ySUr6cHKdDRK9s")
+	if err != nil {
+		t.Error(err)
+	}
+
+	secret, _ := json.Marshal(output)
+	expected, _ := json.Marshal(bytes.NewBufferString(sampleSealedSecret))
+
+	if string(secret) != string(expected) {
+		t.Errorf("Recieved incorrect secret:\n%s", secret)
+	}
+}
+
+const sampleUnsealedSecret = `
+apiVersion: v1
+data:
+  bar: YmFyCg==
+  foo: Zm9vCg==
+kind: Secret
+metadata:
+  name: test
+  namespace: default`
+
+const sampleCert = `-----BEGIN CERTIFICATE-----
+MIIErjCCApagAwIBAgIRAL7krIyy+2nR81cEvuh7JLwwDQYJKoZIhvcNAQELBQAw
+ADAeFw0yMDAxMjcxNzAzMDRaFw0zMDAxMjQxNzAzMDRaMAAwggIiMA0GCSqGSIb3
+DQEBAQUAA4ICDwAwggIKAoICAQC2YqpYDxEJIuNOAj/59CUkXQ3Pf86znidRUpZM
+cPlfguHtI9poJaoYZhsmbwaP6xe6cfz8nDuheAgp95VMWlRMdqrATcDjWKOvRlcc
+b033Z4R8aS02O9+w8KO4Do7uQ3jlnL2A8XiWWzlaOS816FE3qvDFOuXA6Mv8Kd82
++f3AcUx2vBOLLaqtoPY4FYGpaGFW0etWKr3wDrhkUSRKr1lfCXGfA+HwThxL+50R
+eEYjwgNDGr0gVovg+OU2JfdSfMrFee5Jh28ZQf6fv9WtJsOFcfgPTuRAdKmEzcMi
+utvF+tqCRskzaNZEW0Wd5c+whSbi5yfHJKT0i/cxxuz2jqm3cWRlpTFfBvIvdggf
+gwSW/AqY73W7lb4RBjLWcMpaX7eHkZtAorh3xIsctwaeBH1xIr1erTlph8hsSNrB
+B8nlgea6U8/o3qvjtQ8fNE5Qigisd48s8GAghw+gW3kNHfItFh0ksP/ju8vq3ZBV
+fbkOIYvnVqj547fhulFnvmfl5/aVNxz8cljGPXB2ldb9+6UgPC2Rlelgpi9hRT6l
+5uJbWnEOEZmElRuSDMGcVCYyJa0ya2vvqkoq01RbAsJfag2rUNAhwNgjtsz29OLj
+GFh425Y3oodRV53Yo1ENanC/Oor1n1jMfpz+jSV5fDXz15L3UeHhUTaE/X1MJXaz
+Zk0DpwIDAQABoyMwITAOBgNVHQ8BAf8EBAMCAAEwDwYDVR0TAQH/BAUwAwEB/zAN
+BgkqhkiG9w0BAQsFAAOCAgEAqRXW9GgL5sVN/fCyx5AfmIQMrxakw/o6DvdCHrb8
+oltzIr/wemlWRy0HRupKnlHFbSzusZ/4LfVubIrY4ImJclMUD75+u2JakWdNQew1
+GbCvQ/21NBOsQQUnki/+oZczZD6T6bQYJ1Uia757LUpyVhP5H1wbze/z+hVAc4Zo
+UCu+gCzCdbGoKxLaPfvHjOSg1dq3+9sMcU4EgH+MjHo1HMc+j6TGo7P9lrc6pA4k
+45TkbfPGYk/N5t/Z+U6OKM6eC4tjZJ2sGEAbkwZ6tOvIzeKZkiCMRtr5mSSEscQu
+POmlMt5fwF893BHa7xlSVhlSraayuwk6SYXsEk794zmBZ7CRRRWnZq95dHoITtM2
+MLert8+hIcbNIsuFin/mMCZ5Yv2kGiE1+IttG4aL5x+BaQtXdkCdP31JCkMgotbZ
+zbflwD7lnKr/X7m0rVKZ1ba89FanYc23m3q2M6vkBrfpBcqXd0If0XzqObpvkCQY
+lRXcW2xC4bYBrkz9FMkdaXGe8qfndfzopZzuq4WhYFXUs6mQqUtD8RYdlz7SkbvN
+CgS5nJsv/BPrkYSMSGQ9HrVHy7qST5oIoaiCsWRgT4cAdWynoMGp/Hwzs+B/zTV/
+n5sJflx9u43DD0h+rYRXRE8qYzOGHu/HIJgWKnacAMwHOW70/mJIEs6MMP0T347J
+3GM=
+-----END CERTIFICATE-----`
+
+const sampleSealedSecret = `{
+  "kind": "SealedSecret",
+  "apiVersion": "bitnami.com/v1alpha1",
+  "metadata": {
+	"name": "test",
+	"namespace": "default",
+	"creationTimestamp": null
+  },
+  "spec": {
+	"template": {
+	  "metadata": {
+		"name": "test",
+		"namespace": "default%",
+		"creationTimestamp": null
+	  }
+	},
+	"encryptedData": {
+	  "bar": "AgAjTFcmAAoPCe7ySYn2y4WiZmZmWv/RH5MVa1tAmWaLELxt9tZr2To5KzfsM168kU7hnIQAgfWKRNWvhVGwRbI90IEUI7N9pSH/iG1jE+89dWmeklVERqlQnxMOra2pl4rG8+atCbKa7UpEUT5gyWbQcVeyURjak91jsDJjKThBvyNDMvbiLnvhfakyLuVc0xmFmsq0efMPEDM5z8w1H9hUjzM5BZ5kicdtAQVTRJqC6TrTG/iJMY2r/8mZ9sxVr99cOog++wNrPg25CMnmMdzziFtKbbshdsQ6dpqJs986aGMffUXjYPfFr4HSOfIZUe0EQ3KspAkLOWyUlNnRPrYz86+dpoe1BfF74Nd07Qq0+J0agL7d2eyAOiuhal2JAGGuzTwPRP/nDAW2V+BlGsFpuD03ASnSKMh2ZihwKY++LYFxCMafiT1Pwm2W7PzNVI63GNc5R9v6xp4jFd1duH4kXeyXxctBR1zZKohHkFinssmCPLNBsieGmhO7wgFv/T5jWDeXJ6omQoMl1MXXuTAA5Wh8uzp7Zof4VIe87FXn2Y+uOORo6Bs3NJw41Io/eZZPfPVvgjeREgNoumdDuRfDVtK+Z9+PCOiP1h/ZSYVjbCetViAsaVU3a5F1TSZu7aW9fIz/Rc4qZjapvTUz/290Po7N/U0cFo0i5P8HSZfdwZiLBHlVC3UKMTL5MrGgTmrM15iu",
+	  "foo": "AgAjTFcmAAoPCe7ySYn2y4WiZmZmWv/RH5MVa1tAmWaLELxt9tZr2To5KzfsM168kU7hnIQAgfWKRNWvhVGwRbI90IEUI7N9pSH/iG1jE+89dWmeklVERqlQnxMOra2pl4rG8+atCbKa7UpEUT5gyWbQcVeyURjak91jsDJjKThBvyNDMvbiLnvhfakyLuVc0xmFmsq0efMPEDM5z8w1H9hUjzM5BZ5kicdtAQVTRJqC6TrTG/iJMY2r/8mZ9sxVr99cOog++wNrPg25CMnmMdzziFtKbbshdsQ6dpqJs986aGMffUXjYPfFr4HSOfIZUe0EQ3KspAkLOWyUlNnRPrYz86+dpoe1BfF74Nd07Qq0+J0agL7d2eyAOiuhal2JAGGuzTwPRP/nDAW2V+BlGsFpuD03ASnSKMh2ZihwKY++LYFxCMafiT1Pwm2W7PzNVI63GNc5R9v6xp4jFd1duH4kXeyXxctBR1zZKohHkFinssmCPLNBsieGmhO7wgFv/T5jWDeXJ6omQoMl1MXXuTAA5Wh8uzp7Zof4VIe87FXn2Y+uOORo6Bs3NJw41Io/eZZPfPVvgjeREgNoumdDuRfDVtK+Z9+PCOiP1h/ZSYVjbCetViAsaVU3a5F1TSZu7aW9fIz/Rc4qZjapvTUz/290Po7N/U0cFo0i5P8HSZfdwZyFGXn/9ALE6LoGQtv+H45rTGmE"
+	}
+  },
+  "status": {
+	
+  }
+}`

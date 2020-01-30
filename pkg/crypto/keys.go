@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"crypto/rand"
-	"fmt"
 	"errors"
 	"crypto/rsa"
 	"crypto/sha512"
@@ -62,11 +61,9 @@ func SignKey(r io.Reader, key *rsa.PrivateKey, validFor time.Duration, cn string
 }
 
 func SessionKeyProvider(sessionKeySource string, input []byte) (io.Reader, error) {
-	fmt.Println(sessionKeySource)
 	if len(sessionKeySource) == 0 {
 		return rand.Reader, nil
 	}
-	fmt.Printf("%d\n", len(sessionKeySource))
 	if len(sessionKeySource) < 32 {
 		return nil, errors.New("Session key source must be at least 32 characters long")
 	}
@@ -90,7 +87,6 @@ func newSessionKeyProvider(seed []byte, input []byte) *Reader {
 	for _, a := range [][]byte{seed, sLen, input, iLen} {
 		toHash = append(toHash, a...)
 	}
-	fmt.Println(sha.Sum(toHash))
 	
 	return &Reader{sha.Sum(toHash), nil, 0, sha}
 }
