@@ -63,7 +63,7 @@ var (
 	reEncrypt      bool // re-encrypt command
 	unseal         = flag.Bool("recovery-unseal", false, "Decrypt a sealed secrets file obtained from stdin, using the private key passed with --recovery-private-key. Intended to be used in disaster recovery mode.")
 	privKeys       = flag.StringSlice("recovery-private-key", nil, "Private key filename used by the --recovery-unseal command. Multiple files accepted either via comma separated list or by repetition of the flag. Either PEM encoded private keys or a backup of a json/yaml encoded k8s sealed-secret controller secret (and v1.List) are accepted. ")
-	sessionKeySeed = flag.String("session-key-seed", "", "Optional session key (32 char+). If set then identical input will result in identical output (e.g. it is deterministic). If possible do not use this!")
+	sessionKeySeed = flag.String("session-key-seed", "", "Optional session key (32 char+). If set then identical input will result in identical output (e.g. it is deterministic). This could potentially make it less cryptographically secure!")
 
 	// VERSION set from Makefile
 	VERSION = buildinfo.DefaultVersion
@@ -664,4 +664,17 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func SealSecret(input io.Reader, output io.Writer, certURL string, format string, allowEmptyData bool, secretName string, overrideNamespace string, sessionKeySeed string) error {
+	outputFormat = &format;
+	f, err := openCert(certURL)
+	if err != nil {
+		return err
+	}
+	pubKey, err := parseKey(f)
+	if err != nil {
+		return err
+	}
+    return seal(input, output, scheme.Codecs, pubKey, allowEmptyData, secretName, "", sessionKeySeed)
 }
