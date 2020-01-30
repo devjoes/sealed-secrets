@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/binary"
@@ -119,4 +120,16 @@ func singleDecrypt(rnd io.Reader, privKey *rsa.PrivateKey, ciphertext, label []b
 	}
 
 	return plaintext, nil
+}
+
+func SessionKeyProvider(sessionKeySeed string, input []byte) (io.Reader, error) {
+	if len(sessionKeySeed) == 0 {
+		return rand.Reader, nil
+	}
+	if len(sessionKeySeed) < 32 {
+		return nil, errors.New("Session key seed must be at least 32 characters long")
+	}
+
+	var provider = NewSessionKeyProvider([]byte(sessionKeySeed), input)
+	return provider, nil
 }

@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"crypto/rand"
-	"errors"
 	"crypto/rsa"
 	"crypto/sha512"
 	"crypto/x509"
@@ -60,17 +59,6 @@ func SignKey(r io.Reader, key *rsa.PrivateKey, validFor time.Duration, cn string
 	return x509.ParseCertificate(data)
 }
 
-func SessionKeyProvider(sessionKeySource string, input []byte) (io.Reader, error) {
-	if len(sessionKeySource) == 0 {
-		return rand.Reader, nil
-	}
-	if len(sessionKeySource) < 32 {
-		return nil, errors.New("Session key source must be at least 32 characters long")
-	}
-
-	return newSessionKeyProvider([]byte(sessionKeySource), input), nil
-}
-
 type Reader struct {
 	hash      []byte
 	current   []byte
@@ -78,7 +66,7 @@ type Reader struct {
 	sha       hash.Hash
 }
 
-func newSessionKeyProvider(seed []byte, input []byte) *Reader {
+func NewSessionKeyProvider(seed []byte, input []byte) *Reader {
 	sha := sha512.New()
 	sLen := intToBytes(len(seed))
 	iLen := intToBytes(len(sha.Sum(input)))
