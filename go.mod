@@ -5,7 +5,6 @@ go 1.12
 require (
 	github.com/bitnami-labs/flagenv v0.0.0-20190607135054-a87af7a1d6fc
 	github.com/bitnami-labs/pflagenv v0.0.0-20190702160147-b4d9f048d98f
-	github.com/bitnami-labs/sealed-secrets v0.9.7
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 	github.com/mattn/go-isatty v0.0.10
