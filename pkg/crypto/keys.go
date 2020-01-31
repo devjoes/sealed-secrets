@@ -3,7 +3,7 @@ package crypto
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha512"
+	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/binary"
@@ -67,7 +67,7 @@ type Reader struct {
 }
 
 func newSessionKeyProvider(seed []byte, input []byte) *Reader {
-	sha := sha512.New()
+	sha := sha256.New()
 	sLen := intToBytes(len(seed))
 	iLen := intToBytes(len(sha.Sum(input)))
 
