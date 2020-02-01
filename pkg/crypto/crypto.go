@@ -126,9 +126,9 @@ func SessionKeyProvider(sessionKeySeed string, input []byte) (io.Reader, error) 
 	if len(sessionKeySeed) == 0 {
 		return rand.Reader, nil
 	}
-	if len(sessionKeySeed) < 32 {
-		fmt.Printf("Session key seed: %s\n", sessionKeySeed)
-		return nil, errors.New("Session key seed must be at least 32 characters long")
+	if len([]byte(sessionKeySeed)) < 32 {
+		fmt.Printf("Session key seed is: %s\n", sessionKeySeed)
+		return nil, errors.New("Session key seed must be at least 32 bytes long")
 	}
 
 	var provider = newSessionKeyProvider([]byte(sessionKeySeed), input)
